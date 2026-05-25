@@ -1,0 +1,67 @@
+name: Nightly Build
+
+on:
+  schedule:
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Resolve upstream HEAD
+        id: up
+        shell: bash
+        run: echo "sha=$(git ls-remote https://github.com/benaclejames/VRCFaceTracking master | cut -f1)" >> "$GITHUB_OUTPUT"
+
+      - name: Skip if unchanged
+        id: check
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          last=$(gh release view nightly -R "$GITHUB_REPOSITORY" --json body -q .body 2>/dev/null | sed -n 's/.*sha:\([0-9a-f]\{40\}\).*/\1/p' || true)
+          if [ "$last" = "${{ steps.up.outputs.sha }}" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout upstream
+        if: steps.check.outputs.skip == 'false'
+        uses: actions/checkout@v4
+        with:
+          repository: benaclejames/VRCFaceTracking
+          ref: ${{ steps.up.outputs.sha }}
+
+      - name: Setup .NET
+        if: steps.check.outputs.skip == 'false'
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        if: steps.check.outputs.skip == 'false'
+        run: dotnet restore
+
+      - name: Publish
+        if: steps.check.outputs.skip == 'false'
+        run: dotnet publish --configuration Release --output ./publish /p:EnableWindowsTargeting=true
+
+      - name: Zip
+        if: steps.check.outputs.skip == 'false'
+        shell: pwsh
+        run: Compress-Archive -Path publish/* -DestinationPath VRCFaceTracking-nightly.zip
+
+      - name: Release
+        if: steps.check.outputs.skip == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: nightly
+          name: Nightly build
+          body: "Auto-built from upstream master. sha:${{ steps.up.outputs.sha }}"
+          files: VRCFaceTracking-nightly.zip
+          prerelease: true
