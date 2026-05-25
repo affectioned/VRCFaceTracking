@@ -3,6 +3,8 @@
 Provides eye tracking and lip tracking in VRChat by providing a bridge between your tracking hardware and VRChat's OSC server.
 ## [Get started here!](https://docs.vrcft.io/docs/intro/getting-started)
 
+> **About this fork:** this fork exists for people who want to run the latest build from upstream `master` without installing the app through the Steam store. A GitHub Actions workflow builds upstream master every night and publishes it as a release here — grab the latest zip from [Releases](https://github.com/affectioned/VRCFaceTracking/releases/tag/nightly) or pull it directly: `https://github.com/affectioned/VRCFaceTracking/releases/download/nightly/VRCFaceTracking-nightly.zip`. All credit for the app itself goes to [benaclejames/VRCFaceTracking](https://github.com/benaclejames/VRCFaceTracking).
+
 [![Discord](https://discord.com/api/guilds/849300336128032789/widget.png)](https://discord.com/invite/vrcft)
 
 ## 🎥 Demo
